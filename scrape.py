@@ -37,12 +37,14 @@ def main():
                 m = re.search(r'\(Duration (.*)\)', temp)
                 d['duration'] = m.group(1)
                 d['location'] = grant.find("span").text.strip()
+
                 cause_area = grant.find("p", {"class": "assignments"})
-                m = re.search(r'Learn more about (.*)$',
-                              cause_area.text.strip())
-                if m:
-                    d['cause_area'] = m.group(1)
-                d['cause_area_url'] = cause_area.find("a").get("href")
+                if cause_area:
+                    m = re.search(r'Learn more about (.*)$',
+                                  cause_area.text.strip())
+                    if m:
+                        d['cause_area'] = m.group(1)
+                    d['cause_area_url'] = cause_area.find("a").get("href")
 
                 grant.find_all("p")[1].span.extract()  # remove the span tag
                 notes = grant.find_all("p")[1].text.strip()

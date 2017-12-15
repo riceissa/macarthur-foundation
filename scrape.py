@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+import sys
 
 
 def main():
@@ -17,6 +18,7 @@ def main():
         writer.writeheader()
 
         while True:
+            print("Doing page", page, file=sys.stderr)
             r = requests.get(url + str(page))
 
             # We have reached the last page, so stop

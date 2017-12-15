@@ -13,7 +13,7 @@ def main():
     first = True
     with open("data.csv", "w", newline="") as f:
         fieldnames = ["grantee", "url", "amount", "date", "duration",
-                      "location", "notes"]
+                      "location", "notes", "cause_area", "cause_area_url"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
 
@@ -30,13 +30,20 @@ def main():
             for grant in grants.find_all("li"):
                 d = {}
                 d['grantee'] = grant.find("h2").text
-                d['url'] = grant.find("h2").find("a").get("href")
+                d['url'] = (grant.find("h2").find("a") or {}).get("href")
                 d['amount'] = grant.find("div", {"class": "amount"}).text
                 d['date'] = grant.find("p", {"class": "activedate"}).find("strong").text
                 temp = grant.find("p", {"class": "activedate"}).text.strip()
                 m = re.search(r'\(Duration (.*)\)', temp)
                 d['duration'] = m.group(1)
                 d['location'] = grant.find("span").text.strip()
+                cause_area = grant.find("p", {"class": "assignments"})
+                m = re.search(r'Learn more about (.*)$',
+                              cause_area.text.strip())
+                if m:
+                    d['cause_area'] = m.group(1)
+                d['cause_area_url'] = cause_area.find("a").get("href")
+
                 grant.find_all("p")[1].span.extract()  # remove the span tag
                 notes = grant.find_all("p")[1].text.strip()
                 assert notes.startswith("\u2013 ")

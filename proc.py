@@ -3,6 +3,7 @@
 
 import csv
 import re
+import sys
 
 
 US_STATES = [
@@ -31,12 +32,12 @@ COUNTRIES = [
     'Chile', 'China', 'Christmas Island', 'Cocos (Keeling) Islands',
     'Colombia', 'Comoros', 'Congo - Brazzaville', 'Congo - Kinshasa',
     'Cook Islands', 'Costa Rica', 'Côte d’Ivoire', 'Croatia', 'Cuba',
-    'Curaçao', 'Cyprus', 'Czechia', 'Denmark', 'Diego Garcia', 'Djibouti',
+    'Curaçao', 'Cyprus', 'Czechia', 'Czech Republic', 'Denmark', 'Diego Garcia', 'Djibouti',
     'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador',
     'Equatorial Guinea', 'Eritrea', 'Estonia', 'Ethiopia', 'Eurozone',
     'Falkland Islands', 'Faroe Islands', 'Fiji', 'Finland', 'France',
     'French Guiana', 'French Polynesia', 'French Southern Territories',
-    'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Gibraltar',
+    'Gabon', 'The Gambia', 'Georgia', 'Germany', 'Ghana', 'Gibraltar',
     'Greece', 'Greenland', 'Grenada', 'Guadeloupe', 'Guam', 'Guatemala',
     'Guernsey', 'Guinea', 'Guinea-Bissau', 'Guyana', 'Haiti', 'Honduras',
     'Hong Kong SAR China', 'Hungary', 'Iceland', 'India', 'Indonesia',
@@ -63,9 +64,9 @@ COUNTRIES = [
     'St. Vincent & Grenadines', 'Sudan', 'Suriname', 'Svalbard & Jan Mayen',
     'Swaziland', 'Sweden', 'Switzerland', 'Syria', 'Taiwan', 'Tajikistan',
     'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tokelau', 'Tonga',
-    'Trinidad & Tobago', 'Tristan da Cunha', 'Tunisia', 'Turkey',
+    'Trinidad and Tobago', 'Tristan da Cunha', 'Tunisia', 'Turkey',
     'Turkmenistan', 'Turks & Caicos Islands', 'Tuvalu', 'U.S. Outlying Islands',
-    'U.S. Virgin Islands', 'Uganda', 'Ukraine', 'United Arab Emirates',
+    'US Virgin Islands', 'Uganda', 'Ukraine', 'United Arab Emirates',
     'United Kingdom', 'United Nations', 'United States', 'Uruguay',
     'Uzbekistan', 'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam',
     'Wallis & Futuna', 'Western Sahara', 'Yemen', 'Zambia', 'Zimbabwe',
@@ -130,9 +131,29 @@ def affected_locations(location):
     """Return a tuple (affected_countries, affected_states, affected_cities,
     affected_regions)"""
     parts = location.split(", ")
+    if parts[-2:] == ["Korea", "South"]:
+        assert len(parts) == 3, parts
+        return ("South Korea", "", parts[0], "")
+    if parts == ['Onike', 'Yaba', 'Lagos State', 'Nigeria']:
+        return ("Nigeria", "Lagos State", "Lagos", "")
+    if parts == ['Alto-Porvorim', 'Bardez', 'India']:
+        return ("India", "Goa", "Alto-Porvorim", "")
+    if parts[-2:] == ['Congo', 'Democratic Republic of the']:
+        assert len(parts) == 3, parts
+        return ("Democratic Republic of the Congo", "", parts[0], "")
+    if parts[-1] in ["D.C.", "District of Columbia"]:
+        return ("United States", "", "Washington, D.C.", "")
     if parts[-1] in US_STATES:
         assert len(parts) == 2, parts
         return ("United States", parts[1], parts[0], "")
+    if parts[-1] in COUNTRIES:
+        if len(parts) == 1:
+            return (parts[0], "", "", "")
+        if len(parts) == 2:
+            return (parts[1], "", parts[0], "")
+        print("Not 1 or 2:", parts, file=sys.stderr)
+        return ("FIXME", "FIXME", "FIXME", "FIXME")
+    print("Not country or state:", parts, file=sys.stderr)
     return ("FIXME", "FIXME", "FIXME", "FIXME")
 
 if __name__ == "__main__":

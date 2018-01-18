@@ -131,6 +131,8 @@ def affected_locations(location):
     """Return a tuple (affected_countries, affected_states, affected_cities,
     affected_regions)"""
     parts = location.split(", ")
+    if parts == [""]:
+        return ("", "", "", "")
     if parts[-2:] == ["Korea", "South"]:
         assert len(parts) == 3, parts
         return ("South Korea", "", parts[0], "")
@@ -138,6 +140,15 @@ def affected_locations(location):
         return ("Nigeria", "Lagos State", "Lagos", "")
     if parts == ['Alto-Porvorim', 'Bardez', 'India']:
         return ("India", "Goa", "Alto-Porvorim", "")
+    if parts == ['Goroka', 'EHP', 'Papua New Guinea']:
+        return ("Papua New Guinea", "Eastern Highlands Province",
+                "Goroka", "")
+    if parts == ['Varvarino', 'Voronezh Region', 'Russia']:
+        return ("Russia", "Voronezh Oblast", "Voronezh", "")
+    if parts == ['Cali', 'Valle', 'Colombia']:
+        return ("Colombia", "Valle del Cauca", "Santiago de Cali", "")
+    if parts == ['Dzorwulu', 'Accra', 'Ghana']:
+        return ("Ghana", "Accra Metropolis District", "Dzorwulu", "")
     if parts[-2:] == ['Congo', 'Democratic Republic of the']:
         assert len(parts) == 3, parts
         return ("Democratic Republic of the Congo", "", parts[0], "")
@@ -152,9 +163,9 @@ def affected_locations(location):
         if len(parts) == 2:
             return (parts[1], "", parts[0], "")
         print("Not 1 or 2:", parts, file=sys.stderr)
-        return ("FIXME", "FIXME", "FIXME", "FIXME")
+        raise ValueError
     print("Not country or state:", parts, file=sys.stderr)
-    return ("FIXME", "FIXME", "FIXME", "FIXME")
+    raise ValueError
 
 if __name__ == "__main__":
     main()

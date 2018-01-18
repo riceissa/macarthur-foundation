@@ -25,8 +25,8 @@ def main():
 
         print("""insert into donations (donor, donee, amount, donation_date,
         donation_date_precision, donation_date_basis, cause_area, url,
-        donor_cause_area_url, notes, affected_countries,
-        affected_regions) values""")
+        donor_cause_area_url, notes, affected_countries, affected_states,
+        affected_cities, affected_regions) values""")
 
         for row in reader:
             amount = row['amount']
@@ -36,6 +36,9 @@ def main():
             assert (len(donation_date) == 4 and
                     re.match(r'^\d\d\d\d$', donation_date) is not None)
             donation_date += "-01-01"
+
+            (affected_countries, affected_states, affected_cities,
+             affected_regions) = affected_locations(row['location'])
 
             print(("    " if first else "    ,") + "(" + ",".join([
                 mysql_quote("MacArthur Foundation"),  # donor
@@ -48,12 +51,18 @@ def main():
                 mysql_quote("https://www.macfound.org/grants/"),  # url
                 mysql_quote("FIXME"),  # donor_cause_area_url
                 mysql_quote(row['notes']),  # notes
-                mysql_quote("FIXME"),  # affected_countries
-                mysql_quote(row['location']),  # affected_regions
+                mysql_quote(affected_countries),  # affected_countries
+                mysql_quote(affected_states),  # affected_states
+                mysql_quote(affected_cities),  # affected_cities
+                mysql_quote(affected_regions),  # affected_regions
             ]) + ")")
             first = False
         print(";")
 
+
+def affected_locations(location):
+    return (affected_countries, affected_states, affected_cities,
+            affected_regions)
 
 if __name__ == "__main__":
     main()

@@ -32,7 +32,6 @@ def main():
             grants = [link for link in soup.find_all("a")
                       if link.get("href") and link.get("href").startswith("/grantees/")]
             for grant in grants:
-                # Sanity check
                 d = parse_grant(grant)
                 writer.writerow(d)
 
@@ -41,6 +40,8 @@ def main():
 
 def parse_grant(grant):
     """Take a grant HTML tag and convert it into a dictionary."""
+
+    # Sanity check
     assert len(grant.find_all("div")) == 4
 
     d = {}

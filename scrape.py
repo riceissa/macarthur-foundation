@@ -7,12 +7,14 @@ import csv
 import re
 import sys
 
+import pdb
+
 
 def main():
     url = "https://www.macfound.org/grants/?page="
     page = 1
     first = True
-    with open("data.csv", "w", newline="") as f:
+    with open(sys.argv[1], "w", newline="") as f:
         fieldnames = ["grantee", "url", "amount", "date", "duration",
                       "location", "notes", "cause_area", "cause_area_url"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -27,33 +29,35 @@ def main():
                 break
 
             soup = BeautifulSoup(r.content, "lxml")
-            grants = soup.find("ul", {"class": "grant-list"})
-            for grant in grants.find_all("li"):
-                d = {}
-                d['grantee'] = grant.find("h2").text
-                d['url'] = (grant.find("h2").find("a") or {}).get("href")
-                d['amount'] = grant.find("div", {"class": "amount"}).text
-                d['date'] = grant.find("p", {"class": "activedate"}).find("strong").text
-                temp = grant.find("p", {"class": "activedate"}).text.strip()
-                m = re.search(r'\(Duration (.*)\)', temp)
-                d['duration'] = m.group(1)
-                d['location'] = grant.find("span").text.strip()
-
-                cause_area = grant.find("p", {"class": "assignments"})
-                if cause_area:
-                    m = re.search(r'Learn more about (.*)$',
-                                  cause_area.text.strip())
-                    if m:
-                        d['cause_area'] = m.group(1)
-                    d['cause_area_url'] = cause_area.find("a").get("href")
-
-                grant.find_all("p")[1].span.extract()  # remove the span tag
-                notes = grant.find_all("p")[1].text.strip()
-                assert notes.startswith("\u2013 ")
-                d['notes'] = notes[len("\u2013 "):]
+            grants = [link for link in soup.find_all("a")
+                      if link.get("href") and link.get("href").startswith("/grantees/")]
+            for grant in grants:
+                # Sanity check
+                d = parse_grant(grant)
                 writer.writerow(d)
 
             page += 1
+
+
+def parse_grant(grant):
+    """Take a grant HTML tag and convert it into a dictionary."""
+    assert len(grant.find_all("div")) == 4
+
+    d = {}
+    d['grantee'] = grant.find("div").text.strip()
+    d['url'] = grant.get("href")
+    d['amount'] = grant.find("strong").contents[0]
+    date_and_duration = grant.find("strong").contents[-1].split("•")
+    assert len(date_and_duration) == 2, date_and_duration
+    d['date'] = date_and_duration[0].strip()
+    d['duration'] = date_and_duration[1].strip()
+    location = grant.find_all("div")[2].text.strip().split("\n")[0]
+    assert location.endswith(" -"), location
+    d['location'] = location[:-len(" -")]
+    d['cause_area'] = grant.find_all("div")[3].text.strip()
+    d['notes'] = " ".join(grant.find_all("div")[2].text.strip().split("\n")[1:]).strip()
+
+    return d
 
 
 if __name__ == "__main__":

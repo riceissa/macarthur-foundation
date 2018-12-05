@@ -6,6 +6,9 @@ import re
 import sys
 
 
+# In the following two lists (US_STATES and US_STATE_ABBREVS), the indexes of
+# the corresponding states must match.  For example if 'California' is index 4
+# in the former list, then 'CA' must also be index 4 in the latter list.
 US_STATES = [
     'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
     'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana',
@@ -15,6 +18,17 @@ US_STATES = [
     'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island',
     'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
     'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
+]
+
+US_STATE_ABBREVS = [
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT",
+    "DE", "FL", "GA", "HI", "ID", "IL", "IN",
+    "IA", "KS", "KY", "LA", "ME", "MD", "MA",
+    "MI", "MN", "MS", "MO", "MT", "NE",
+    "NV", "NH", "NJ", "NM", "NY", "NC",
+    "ND", "OH", "OK", "OR", "PA", "RI",
+    "SC", "SD", "TN", "TX", "UT", "VT",
+    "VA", "WA", "WV", "WI", "WY",
 ]
 
 # From https://raw.githubusercontent.com/umpirsky/country-list/master/data/en_US/country.txt
@@ -86,7 +100,11 @@ def mysql_quote(x):
     return "'{}'".format(x)
 
 def main():
-    with open("data.csv", "r") as f:
+    if len(sys.argv) != 1+1:
+        print("Please include the input CSV file as argument one.",
+              file=sys.stderr)
+        sys.exit()
+    with open(sys.argv[1], "r") as f:
         reader = csv.DictReader(f)
         first = True
 
@@ -138,6 +156,8 @@ def affected_locations(location):
         return ("South Korea", "", parts[0], "")
     if parts == ['Onike', 'Yaba', 'Lagos State', 'Nigeria']:
         return ("Nigeria", "Lagos State", "Lagos", "")
+    if parts == ['Utako', 'Abuja', 'Nigeria']:
+        return ("Nigeria", "Federal Capital Territory", "Abuja", "")
     if parts == ['Alto-Porvorim', 'Bardez', 'India']:
         return ("India", "Goa", "Alto-Porvorim", "")
     if parts == ['Goroka', 'EHP', 'Papua New Guinea']:
@@ -149,14 +169,22 @@ def affected_locations(location):
         return ("Colombia", "Valle del Cauca", "Santiago de Cali", "")
     if parts == ['Dzorwulu', 'Accra', 'Ghana']:
         return ("Ghana", "Accra Metropolis District", "Dzorwulu", "")
+    if parts == ['Cantonments', 'Accra', 'Ghana']:
+        return ("Ghana", "Accra Metropolis District", "Accra", "")
     if parts[-2:] == ['Congo', 'Democratic Republic of the']:
         assert len(parts) == 3, parts
         return ("Democratic Republic of the Congo", "", parts[0], "")
     if parts[-1] in ["D.C.", "District of Columbia"]:
         return ("United States", "", "Washington, D.C.", "")
+    if parts == ['Chicago', '']:
+        return ("United States", "Illinois", "Chicago", "")
     if parts[-1] in US_STATES:
         assert len(parts) == 2, parts
         return ("United States", parts[1], parts[0], "")
+    if parts[-1] in US_STATE_ABBREVS:
+        assert len(parts) == 2, parts
+        state_name = US_STATES[US_STATE_ABBREVS.index(parts[1])]
+        return ("United States", state_name, parts[0], "")
     if parts[-1] in COUNTRIES:
         if len(parts) == 1:
             return (parts[0], "", "", "")
